@@ -4,8 +4,6 @@
 
 ![Diagrama de flujo](diagrama-pendiente.png)
 
-¡Perfecto! Aquí va la descripción solo con lo que el proyecto tiene hoy, sin “pausada” ni “cancelada”.
-
 Microservicio: Producción y Cocina
 Propósito
 
