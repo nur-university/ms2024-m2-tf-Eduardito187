@@ -2,7 +2,7 @@
 
 
 
-![Diagrama de flujo](./microservicio-produccion-cocina.png)
+![Diagrama de flujo](diagrama.png)
 
 Microservicio: Producción y Cocina
 Propósito
