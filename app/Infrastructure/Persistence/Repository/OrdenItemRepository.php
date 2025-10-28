@@ -40,7 +40,7 @@ class OrdenItemRepository implements OrdenItemRepositoryInterface
             $row->id,
             $row->ordenProduccionId,
             $row->productId,
-            $row->product->sku,
+            $row->sku,
             $row->qty,
             $row->price,
             $row->finalPrice
@@ -49,23 +49,18 @@ class OrdenItemRepository implements OrdenItemRepositoryInterface
 
     /**
      * @param AggregateOrdenItem $item
-     * @throws ModelNotFoundException
      * @return void
      */
     public function save(AggregateOrdenItem $item): void
     {
         $product = $this->productRepository->bySku($item->sku);
-        
-        if (!$product) {
-            throw new ModelNotFoundException("El producto sku: {$item->sku} no existe.");
-        }
-
         $item->loadProduct($product);
         OrdenItemModel::updateOrCreate(
             ['id' => $item->id],
             [
                 'op_id' => $item->ordenProduccionId,
                 'p_id' => $item->productId,
+                'sku' => $item->sku,
                 'qty' => $item->qty,
                 'price' => $item->price,
                 'final_price' => $item->finalPrice,

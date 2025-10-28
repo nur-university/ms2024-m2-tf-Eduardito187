@@ -4,13 +4,12 @@ namespace App\Application\Produccion\Handler;
 
 use App\Domain\Produccion\Aggregate\OrdenProduccion as AggregateOrdenProduccion;
 use App\Domain\Produccion\Repository\OrdenProduccionRepositoryInterface;
-use App\Infrastructure\Persistence\Eloquent\Outbox\OutboxStore;
+use App\Application\Support\Transaction\TransactionAggregate;
 use App\Application\Produccion\Command\GenerarOP;
-use App\Domain\Produccion\ValueObject\OrderItem;
+use App\Domain\Produccion\ValueObjects\OrderItem;
 use App\Domain\Produccion\Model\OrderItems;
-use App\Domain\Produccion\ValueObject\Sku;
-use App\Domain\Produccion\ValueObject\Qty;
-use Illuminate\Support\Facades\DB;
+use App\Domain\Produccion\ValueObjects\Sku;
+use App\Domain\Produccion\ValueObjects\Qty;
 
 class GenerarOPHandler
 {
@@ -20,13 +19,22 @@ class GenerarOPHandler
     public readonly OrdenProduccionRepositoryInterface $ordenProduccionRepository;
 
     /**
+     * @var TransactionAggregate
+     */
+    private readonly TransactionAggregate $transactionAggregate;
+
+    /**
      * Constructor
      * 
      * @param OrdenProduccionRepositoryInterface $ordenProduccionRepository
+     * @param TransactionAggregate $transactionAggregate
      */
-    public function __construct(OrdenProduccionRepositoryInterface $ordenProduccionRepository)
-    {
+    public function __construct(
+        OrdenProduccionRepositoryInterface $ordenProduccionRepository,
+        TransactionAggregate $transactionAggregate
+    ) {
         $this->ordenProduccionRepository = $ordenProduccionRepository;
+        $this->transactionAggregate = $transactionAggregate;
     }
 
     /**
@@ -38,34 +46,15 @@ class GenerarOPHandler
         $items = [];
 
         foreach ($command->items as $item) {
-            $items[] = new OrderItem(
-                new Sku($item['sku']),
-                new Qty($item['qty'])
-            );
+            $items[] = new OrderItem(new Sku($item['sku']), new Qty($item['qty']));
         }
 
         $orderItems = OrderItems::fromArray($items);
 
-        $ordenProduccionId = DB::transaction(function () use ($command, $orderItems): int {
-            $ordenProduccion = $command->id
-                ? $this->ordenProduccionRepository->byId($command->id)
-                : AggregateOrdenProduccion::crear(null, $command->fecha, $command->sucursalId, $orderItems);
-
+        return $this->transactionAggregate->runTransaction(function () use ($command, $orderItems): int {
+            $ordenProduccion = AggregateOrdenProduccion::crear( $command->fecha,  $command->sucursalId,  $orderItems);
             $ordenProduccion->agregarItems($orderItems);
-            $persistedId = $this->ordenProduccionRepository->save($ordenProduccion, true);
-
-            foreach ($ordenProduccion->pullEvents() as $event) {
-                OutboxStore::append(
-                    name: $event->name(),
-                    aggregateId: $persistedId,
-                    occurredOn: $event->occurredOn(),
-                    payload: $event->toArray()
-                );
-            }
-
-            return $persistedId;
+            return $this->ordenProduccionRepository->save($ordenProduccion, true, true);
         });
-
-        return $ordenProduccionId;
     }
 }

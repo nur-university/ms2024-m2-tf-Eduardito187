@@ -2,7 +2,7 @@
 
 namespace App\Infrastructure\Persistence\Model;
 
-use App\Infrastructure\Persistence\Model\OrdenProduccion;
+use App\Infrastructure\Persistence\Model\ListaDespacho;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
 
@@ -21,6 +21,6 @@ class ItemDespacho extends Model
    */
   public function ordenProduccion() : BelongsTo
   {
-    return $this->belongsTo(OrdenProduccion::class, 'lista_id');
+    return $this->belongsTo(ListaDespacho::class, 'lista_id');
   }
 }

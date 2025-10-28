@@ -6,8 +6,8 @@ use App\Domain\Produccion\Events\OrdenProduccionPlanificada;
 use App\Domain\Produccion\Events\OrdenProduccionProcesada;
 use App\Domain\Produccion\Events\OrdenProduccionCerrada;
 use App\Domain\Produccion\Events\OrdenProduccionCreada;
+use App\Domain\Shared\Aggregate\AggregateRoot;
 use App\Domain\Produccion\Model\OrderItems;
-use App\Domain\Shared\AggregateRoot;
 use DateTimeImmutable;
 use DomainException;
 
@@ -69,13 +69,13 @@ class OrdenProduccion
     }
 
     /**
-     * @param int|null $id
      * @param DateTimeImmutable $fecha
      * @param int|string $sucursalId
      * @param OrderItems $items
+     * @param int|null $id
      * @return OrdenProduccion
      */
-    public static function crear(int|null $id, DateTimeImmutable $fecha, string $sucursalId, OrderItems $items): self
+    public static function crear(DateTimeImmutable $fecha, string $sucursalId, OrderItems $items, int|null $id = null): self
     {
         $self = new self($id, $fecha, $sucursalId, EstadoOP::CREADA, $items);
 
@@ -146,17 +146,17 @@ class OrdenProduccion
     }
 
     /**
-     * @param OrderItems $nuevos
+     * @param OrderItems $items
      * @throws DomainException
      * @return void
      */
-    public function agregarItems(OrderItems $nuevos): void
+    public function agregarItems(OrderItems $items): void
     {
         if ($this->estado !== EstadoOP::CREADA) {
             throw new DomainException('Solo se pueden agregar ítems cuando la OP está CREADA.');
         }
 
-        $this->items = $this->items->mergedWith($nuevos);
+        $this->items = $this->items->mergedWith($items);
     }
 
     /**

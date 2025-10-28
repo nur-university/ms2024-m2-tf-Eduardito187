@@ -3,9 +3,9 @@
 namespace App\Domain\Produccion\Aggregate;
 
 use App\Domain\Produccion\Events\ProduccionBatchCreado;
-use App\Domain\Produccion\ValueObject\Qty;
-use App\Domain\Produccion\ValueObject\Sku;
-use App\Domain\Shared\AggregateRoot;
+use App\Domain\Shared\Aggregate\AggregateRoot;
+use App\Domain\Produccion\ValueObjects\Qty;
+use App\Domain\Produccion\ValueObjects\Sku;
 use DomainException;
 
 class ProduccionBatch
@@ -203,7 +203,7 @@ class ProduccionBatch
      * @throws DomainException
      * @return void
      */
-    public function desapchar(): void
+    public function despachar(): void
     {
         if (!in_array($this->estado, [EstadoPlanificado::PROCESANDO], true)) {
             throw new DomainException('No se puede despachar en su estado actual el batch.');

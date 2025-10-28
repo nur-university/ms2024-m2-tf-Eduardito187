@@ -2,6 +2,7 @@
 
 namespace App\Domain\Produccion\ValueObjects;
 
+use App\Domain\Produccion\ValueObjects\Sku;
 use App\Domain\Shared\ValueObjects\ValueObject;
 
 class ItemDespacho extends ValueObject
@@ -9,32 +10,64 @@ class ItemDespacho extends ValueObject
     /**
      * @var int|null
      */
-    public readonly int|null $ordenProduccionId;
+    public readonly int|null $listaId;
 
     /**
-     * @var int|null
+     * @var Sku
      */
-    public readonly int|null $productId;
+    public Sku $sku;
 
     /**
-     * @var int|null
+     * @var int
      */
-    public readonly int|null $paqueteId;
+    public readonly int $etiquetaId;
+
+    /**
+     * @var int
+     */
+    public readonly int $pacienteId;
+
+    /**
+     * @var array
+     */
+    public readonly array $direccionSnapshot;
+
+    /**
+     * @var array
+     */
+    public readonly array $ventanaEntrega;
 
     /**
      * Constructor
      * 
-     * @param int|null $ordenProduccionId
-     * @param int|null $productId
-     * @param int|null $paqueteId
+     * @param int|null $listaId
+     * @param Sku $sku
+     * @param int $etiquetaId
+     * @param int $pacienteId
+     * @param array $direccionSnapshot
+     * @param array $ventanaEntrega
      */
     public function __construct(
-        int|null $ordenProduccionId,
-        int|null $productId,
-        int|null $paqueteId
+        int|null $listaId,
+        Sku $sku,
+        int $etiquetaId,
+        int $pacienteId,
+        array $direccionSnapshot = [],
+        array $ventanaEntrega = []
     ) {
-        $this->ordenProduccionId = $ordenProduccionId;
-        $this->productId = $productId;
-        $this->paqueteId = $paqueteId;
+        $this->listaId = $listaId;
+        $this->sku = $sku;
+        $this->etiquetaId = $etiquetaId;
+        $this->pacienteId = $pacienteId;
+        $this->direccionSnapshot = $direccionSnapshot;
+        $this->ventanaEntrega = $ventanaEntrega;
+    }
+
+    /**
+     * @return Sku
+     */
+    public function sku(): Sku
+    {
+        return $this->sku;
     }
 }

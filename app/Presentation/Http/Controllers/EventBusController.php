@@ -48,6 +48,8 @@ class EventBusController
         switch ($data['event']) {
             case 'App\Domain\Produccion\Events\ItemDespachoCreado':
                 break;
+            case 'App\Domain\Produccion\Events\ListaDespachoCreada':
+                break;
             case 'App\Domain\Produccion\Events\OrdenItemCreada':
                 break;
             case 'App\Domain\Produccion\Events\OrdenProduccionCerrada':

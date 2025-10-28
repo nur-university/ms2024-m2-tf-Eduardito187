@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Infrastructure\Persistence\Eloquent\Model;
+namespace App\Infrastructure\Persistence\Model;
 
-use App\Infrastructure\Persistence\Eloquent\Model\ItemDespacho;
+use App\Infrastructure\Persistence\Model\ItemDespacho;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
 

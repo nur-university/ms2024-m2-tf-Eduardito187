@@ -11,12 +11,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('lote', function (Blueprint $t) {
-            $t->bigIncrements('id');
-            $t->string('nombre');
-            $t->timestamps();
-        });
-
         Schema::create('receta_version', function (Blueprint $t) {
             $t->bigIncrements('id');
             $t->string('nombre');
@@ -41,7 +35,7 @@ return new class extends Migration
         });
 
         Schema::table('produccion_batch', function (Blueprint $t) {
-            $t->decimal('rendimiento', 18, 2)->nullable()->after('merma_gr');
+            $t->decimal('rendimiento_pct', 18, 2)->nullable()->after('merma_gr');
             $t->unsignedBigInteger('estacion_id')->nullable();
             $t->foreign('estacion_id')->references('id')->on('estacion');
             $t->unsignedBigInteger('receta_version_id')->nullable();
@@ -61,7 +55,8 @@ return new class extends Migration
             $t->string('ciudad')->nullable();
             $t->string('provincia')->nullable();
             $t->string('pais')->nullable();
-            $t->json('geo')->nullable();
+            $t->decimal('latitud', 10, 7)->nullable();
+            $t->decimal('longitud', 10, 7)->nullable();
             $t->timestamps();
         });
 
@@ -72,19 +67,37 @@ return new class extends Migration
             $t->timestamps();
         });
 
-        Schema::create('suscripcion', function (Blueprint $t) {
-            $t->bigIncrements('id');
-            $t->string('nombre');
-            $t->timestamps();
-        });
-
         Schema::create('paciente', function (Blueprint $t) {
             $t->bigIncrements('id');
             $t->string('nombre');
             $t->string('documento')->nullable();
-            $t->unsignedBigInteger('suscripcion_id')->nullable();
-            $t->foreign('suscripcion_id')->references('id')->on('suscripcion')->onDelete('cascade');
             $t->timestamps();
+        });
+
+        Schema::create('suscripcion', function (Blueprint $t) {
+            $t->bigIncrements('id');
+            $t->unsignedBigInteger('paciente_id')->nullable();
+            $t->foreign('paciente_id')->references('id')->on('paciente')->onDelete('cascade');
+            $t->string('estado')->default('activa');
+            $t->timestamps();
+        });
+
+        Schema::table('item_despacho', function (Blueprint $t) {
+            $t->unsignedBigInteger('paciente_id')->nullable();
+            $t->foreign('paciente_id')->references('id')->on('paciente');
+            $t->unsignedBigInteger('suscripcion_id')->nullable()->after('paciente_id');
+            $t->foreign('suscripcion_id')->references('id')->on('suscripcion');
+            $t->unsignedBigInteger('receta_version_id')->nullable()->after('suscripcion_id');
+            $t->foreign('receta_version_id')->references('id')->on('receta_version');
+            $t->unsignedBigInteger('porcion_id')->nullable()->after('receta_version_id');
+            $t->foreign('porcion_id')->references('id')->on('porcion');
+            $t->unsignedBigInteger('direccion_id')->nullable()->after('porcion_id');
+            $t->foreign('direccion_id')->references('id')->on('direccion');
+            $t->unsignedBigInteger('ventana_id')->nullable()->after('direccion_id');
+            $t->foreign('ventana_id')->references('id')->on('ventana_entrega');
+
+            $t->index(['lista_id'], 'idx_item_lista');
+            $t->index(['receta_version_id','porcion_id'], 'idx_item_rec_por');
         });
 
         Schema::create('etiqueta', function (Blueprint $t) {
@@ -110,19 +123,18 @@ return new class extends Migration
             $t->bigIncrements('id');
             $t->unsignedBigInteger('etiqueta_id')->nullable();
             $t->foreign('etiqueta_id')->references('id')->on('etiqueta')->onDelete('cascade');
-            $t->unsignedBigInteger('ventana_id')->nullable();
-            $t->foreign('ventana_id')->references('id')->on('ventana_entrega')->onDelete('cascade');
+            $t->unsignedBigInteger('paciente_id')->nullable();
+            $t->foreign('paciente_id')->references('id')->on('paciente')->onDelete('set null');
             $t->unsignedBigInteger('direccion_id')->nullable();
-            $t->foreign('direccion_id')->references('id')->on('direccion')->onDelete('cascade');
+            $t->foreign('direccion_id')->references('id')->on('direccion')->onDelete('set null');
+            $t->unsignedBigInteger('ventana_id')->nullable();
+            $t->foreign('ventana_id')->references('id')->on('ventana_entrega')->onDelete('set null');
             $t->timestamps();
+
+            $t->index(['paciente_id', 'direccion_id']);
         });
 
-        Schema::table('item_despacho', function (Blueprint $t) {
-            $t->unsignedBigInteger('paquete_id')->nullable();
-            $t->foreign('paquete_id')->references('id')->on('paquete')->onDelete('cascade');
-        });
-
-        Schema::create('calendario', function (Blueprint $t) {
+        Schema::create('calendario_consolidado', function (Blueprint $t) {
             $t->bigIncrements('id');
             $t->date('fecha');
             $t->string('sucursal_id');
@@ -133,7 +145,7 @@ return new class extends Migration
         Schema::create('calendario_item', function (Blueprint $t) {
             $t->bigIncrements('id');
             $t->unsignedBigInteger('calendario_id')->nullable();
-            $t->foreign('calendario_id')->references('id')->on('calendario')->onDelete('cascade');
+            $t->foreign('calendario_id')->references('id')->on('calendario_consolidado')->onDelete('cascade');
             $t->unsignedBigInteger('item_despacho_id')->nullable();
             $t->foreign('item_despacho_id')->references('id')->on('item_despacho')->onDelete('cascade');
             $t->timestamps();
@@ -148,17 +160,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('calendario_item');
-        Schema::dropIfExists('calendario');
-        Schema::table('item_despacho', function (Blueprint $t) {
-            $t->dropForeign('item_despacho_paquete_id_foreign');
-            $t->dropColumn(['paquete_id']);
-        });
         Schema::dropIfExists('paquete');
         Schema::dropIfExists('etiqueta');
-        Schema::dropIfExists('paciente');
-        Schema::dropIfExists('suscripcion');
-        Schema::dropIfExists('ventana_entrega');
-        Schema::dropIfExists('direccion');
+        Schema::dropIfExists('calendario_consolidado');
 
         Schema::table('produccion_batch', function (Blueprint $t) {
             $t->dropForeign('produccion_batch_estacion_id_foreign');
@@ -167,12 +171,28 @@ return new class extends Migration
             $t->dropIndex('idx_pb_rec_por');
             $t->dropIndex('idx_pb_est');
 
-            $t->dropColumn(['rendimiento', 'estacion_id', 'receta_version_id', 'porcion_id']);
+            $t->dropColumn(['rendimiento_pct', 'estacion_id', 'receta_version_id', 'porcion_id']);
         });
 
+        Schema::table('item_despacho', function (Blueprint $t) {
+            $t->dropForeign('item_despacho_paciente_id_foreign');
+            $t->dropForeign('item_despacho_suscripcion_id_foreign');
+            $t->dropForeign('item_despacho_receta_version_id_foreign');
+            $t->dropForeign('item_despacho_porcion_id_foreign');
+            $t->dropForeign('item_despacho_direccion_id_foreign');
+            $t->dropForeign('item_despacho_ventana_id_foreign');
+            $t->dropIndex('idx_item_lista');
+            $t->dropIndex('idx_item_rec_por');
+
+            $t->dropColumn(['paciente_id', 'suscripcion_id', 'receta_version_id', 'porcion_id', 'direccion_id', 'ventana_id']);
+        });
+
+        Schema::dropIfExists('suscripcion');
+        Schema::dropIfExists('paciente');
+        Schema::dropIfExists('ventana_entrega');
+        Schema::dropIfExists('direccion');
         Schema::dropIfExists('estacion');
         Schema::dropIfExists('porcion');
         Schema::dropIfExists('receta_version');
-        Schema::dropIfExists('lote');
     }
 };

@@ -2,9 +2,9 @@
 
 namespace App\Domain\Produccion\Events;
 
-use App\Domain\Produccion\ValueObject\Qty;
-use App\Domain\Produccion\ValueObject\Sku;
-use App\Domain\Shared\BaseDomainEvent;
+use App\Domain\Produccion\ValueObjects\Qty;
+use App\Domain\Produccion\ValueObjects\Sku;
+use App\Domain\Shared\Events\BaseDomainEvent;
 
 class ProduccionBatchCreado extends BaseDomainEvent
 {
