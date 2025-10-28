@@ -2,7 +2,7 @@
 
 
 
-![Diagrama de flujo](diagrama-pendiente.png)
+![Diagrama de flujo](diagrama-pendiente-v2.png)
 
 Microservicio: Producción y Cocina
 Propósito
