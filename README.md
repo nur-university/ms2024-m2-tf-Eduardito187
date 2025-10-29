@@ -52,3 +52,7 @@ Repositorio Eloquent para persistencia (IDs BIGINT AUTO_INCREMENT; FK order_item
 Outbox pattern:
 
 Los eventos de dominio (p. ej., OrdenProduccionCreada, OrdenProduccionPlanificada, OrdenProduccionIniciada, OrdenProduccionCerrada) se registran en tabla outbox dentro de la misma transacción y se publican after-commit.
+
+
+
+................
